@@ -3,34 +3,95 @@ import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Mail, MapPin, Send, Github, Linkedin, Twitter, Instagram } from "lucide-react";
+import {
+  Mail,
+  MapPin,
+  Send,
+  Github,
+  Linkedin,
+  Twitter,
+  Instagram,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Contact = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Controlled form state
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+
+  const isEmailValid = (e: string) => /\S+@\S+\.\S+/.test(e);
+  const isFormValid =
+    name.trim() !== "" &&
+    isEmailValid(email) &&
+    subject.trim() !== "" &&
+    message.trim() !== "";
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!isFormValid) return;
     setIsSubmitting(true);
+    // change the endpoint to your Formspree form ID
+    try {
+      const res = await fetch("https://formspree.io/f/mlgdqkbw", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ name, email, subject, message }),
+      });
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => null);
+        throw new Error(errBody?.error || "Failed to send message");
+      }
 
-    toast({
-      title: "Message sent!",
-      description: "We'll get back to you as soon as possible.",
-    });
+      toast({
+        title: "Message sent!",
+        description: "We'll get back to you as soon as possible.",
+      });
 
-    setIsSubmitting(false);
-    (e.target as HTMLFormElement).reset();
+      // reset
+      setName("");
+      setEmail("");
+      setSubject("");
+      setMessage("");
+    } catch (err) {
+      toast({
+        title: "Send failed",
+        description: "Could not send your message. Try again later.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const socialLinks = [
-    { icon: Github, href: "https://github.com/binarybrains-dit", label: "GitHub" },
-    { icon: Linkedin, href: "https://linkedin.com/company/binarybrains-dit", label: "LinkedIn" },
-    { icon: Twitter, href: "https://twitter.com/binarybrains_dit", label: "Twitter" },
-    { icon: Instagram, href: "https://instagram.com/binarybrains.dit", label: "Instagram" },
+    {
+      icon: Github,
+      href: "https://github.com/binarybrains-dit",
+      label: "GitHub",
+    },
+    {
+      icon: Linkedin,
+      href: "https://linkedin.com/company/binarybrains-dit",
+      label: "LinkedIn",
+    },
+    {
+      icon: Twitter,
+      href: "https://twitter.com/binarybrains_dit",
+      label: "Twitter",
+    },
+    {
+      icon: Instagram,
+      href: "https://instagram.com/binarybrains.dit",
+      label: "Instagram",
+    },
   ];
 
   return (
@@ -46,7 +107,8 @@ const Contact = () => {
               Get in <span className="gradient-text">Touch</span>
             </h1>
             <p className="text-lg text-muted-foreground">
-              Have questions? Want to join or sponsor? We'd love to hear from you.
+              Have questions? Want to join or sponsor? We'd love to hear from
+              you.
             </p>
           </div>
         </div>
@@ -64,7 +126,10 @@ const Contact = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
+                    <label
+                      htmlFor="name"
+                      className="block text-sm font-medium text-foreground mb-2"
+                    >
                       Name
                     </label>
                     <Input
@@ -73,10 +138,15 @@ const Contact = () => {
                       placeholder="Your name"
                       required
                       className="h-12"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                     />
                   </div>
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium text-foreground mb-2"
+                    >
                       Email
                     </label>
                     <Input
@@ -86,11 +156,16 @@ const Contact = () => {
                       placeholder="your@email.com"
                       required
                       className="h-12"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-foreground mb-2">
+                  <label
+                    htmlFor="subject"
+                    className="block text-sm font-medium text-foreground mb-2"
+                  >
                     Subject
                   </label>
                   <Input
@@ -99,10 +174,15 @@ const Contact = () => {
                     placeholder="What's this about?"
                     required
                     className="h-12"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
                   />
                 </div>
                 <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
+                  <label
+                    htmlFor="message"
+                    className="block text-sm font-medium text-foreground mb-2"
+                  >
                     Message
                   </label>
                   <Textarea
@@ -111,9 +191,17 @@ const Contact = () => {
                     placeholder="Your message..."
                     rows={5}
                     required
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
                   />
                 </div>
-                <Button type="submit" variant="hero" size="lg" disabled={isSubmitting} className="w-full">
+                <Button
+                  type="submit"
+                  variant="hero"
+                  size="lg"
+                  disabled={!isFormValid || isSubmitting}
+                  className="w-full"
+                >
                   {isSubmitting ? "Sending..." : "Send Message"}
                   <Send className="h-4 w-4" />
                 </Button>
@@ -182,11 +270,14 @@ const Contact = () => {
                   Interested in Sponsoring?
                 </h3>
                 <p className="text-muted-foreground text-sm mb-4">
-                  For sponsorship inquiries, please contact our organizer directly.
+                  For sponsorship inquiries, please contact our organizer
+                  directly.
                 </p>
                 <div className="text-sm">
                   <p className="font-medium text-foreground">Harshil Bohra</p>
-                  <p className="text-muted-foreground">Organizer – AlgoHeist 2026</p>
+                  <p className="text-muted-foreground">
+                    Organizer – AlgoHeist 2026
+                  </p>
                 </div>
               </div>
             </div>
